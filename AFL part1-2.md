@@ -32,9 +32,11 @@ main函数通过while ((opt = getopt(argc, argv, \"+i:o:f:m:b:t:T:dnCB:S:M:x:QV\
 
 在main函数主循环一轮执行中，fuzz_one首先进行Deterministic阶段（若当前用例已执行过一次完整的Deterministic阶段则跳过），完成Deterministic阶段后进入Havoc阶段。
 没有特殊设置的情况下，fuzz_one最开始不启用SPLICING阶段。若主循环遍历了一次queue队列后没有新的发现，则会设置use_splicing = 1。这之后，fuzz_one中完成Havoc阶段后会进入SPLICING阶段。
+![fuzz_one流程图](./fuzz_one流程图.png)
 
 在所有阶段中，变异后的用例在执行common_fuzz_stuff时若发现该变异用例有独特价值（由save_if_interesting(argv, out_buf, len, fault)函数判定），会被添加到queue队列。另外，当save_if_interesting发现用例引发崩溃时，会调用write_crash_readme函数将报错信息写入文件。
 主循环一轮执行完成后，main函数调用write_bitmap()、write_stats_file(0, 0, 0)、save_auto()，保存位图（用于记录覆盖率）、统计文件和自动生成的字典。
+![main流程图](./main流程图.png)
 
 根据afl-1.readthedocs.io文档的说明，AFL运行过程中，已发现的测试用例会被定期清理，以剔除那些被更新、覆盖率更高的发现所淘汰的用例。该功能通过在主循环每次循环开始时调用cull_queue函数实现，该函数会标记覆盖率更高的测试用例为favored，其他测试用例为redundant，被标记为favored的用例在执行fuzz_one时会被更优先执行。
 
