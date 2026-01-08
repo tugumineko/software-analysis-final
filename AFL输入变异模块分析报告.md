@@ -41,7 +41,7 @@ main函数通过while ((opt = getopt(argc, argv, \"+i:o:f:m:b:t:T:dnCB:S:M:x:QV\
 
 实验环境为WSL2 / Ubuntu 22.04，AFL版本为2.57b，GCC版本为13.3.0。
 
-环境搭建方面，首先从GitHub克隆AFL源码（https://github.com/google/AFL.git），然后使用CFLAGS="-g -O0" make -j4编译AFL以便于后续GDB调试。编译完成后，使用本地编译的afl-gcc -g -O0编译目标程序target.c，AFL在编译时自动插入了17个覆盖率追踪点。最后需要配置core_pattern参数（echo core | sudo tee /proc/sys/kernel/core_pattern）以满足AFL对崩溃信号处理的要求。
+环境搭建方面，首先从GitHub克隆AFL源码(https://github.com/google/AFL.git)，然后使用CFLAGS="-g -O0" make -j4编译AFL以便于后续GDB调试。编译完成后，使用本地编译的afl-gcc -g -O0编译目标程序target.c，AFL在编译时自动插入了17个覆盖率追踪点。最后需要配置core_pattern参数（echo core | sudo tee /proc/sys/kernel/core_pattern）以满足AFL对崩溃信号处理的要求。
 
 目标程序target.c设计了多层条件检查用于演示各变异阶段的效果：阶段1为魔数校验（data[0]='C', data[1]='M', data[2]='D'），用于演示bitflip算子；阶段2为边界值判断（data[3]=42），用于演示arith/interest算子；阶段3为深层路径（data[4-5]="OK", data[6]=0xFF, data[7]=0x00），触发时导致空指针解引用崩溃。
 
@@ -65,9 +65,9 @@ Bitflip阶段（stage_name为"bitflip 1/1"和"bitflip 2/1"）通过FLIP_BIT宏�
 
 GDB调试实验中，设置断点于fuzz_one函数（afl-fuzz.c:5007）和common_fuzz_stuff函数（afl-fuzz.c:3110）。关键观察变量包括：stage_name（当前变异阶段名称）、stage_cur/stage_max（变异进度）、out_buf（变异后的输入缓冲区）、queue_cur->fname（当前处理的种子文件名）。在bitflip阶段断点处观察到out_buf首字节从0x41变为0xc1（0x41 XOR 0x80），验证了位翻转操作的正确性。
 
-![ex5.6graph](./docs/experiment-img/ex5.6graph.png)
+![ex7.1](./docs/experiment-img/ex7.1.png)
 
-各阶段贡献率统计显示：bitflip发现3个新路径（破解魔数'C'和'M'），arith发现2个新路径（破解'D'和边界值42），interest发现2个新路径（发现0xFF和0x00），havoc发现2个新路径（随机探索）。确定性变异阶段（bitflip + arith + interest）贡献了约70%的新路径发现，体现了AFL确定性变异策略的高效性。
+各阶段贡献率统计显示：bitflip发现3个新路径（破解魔数'C'和'M'），arith发现2个新路径（破解'D'和边界值42），interest发现2个新路径（发现0xFF和0x00），havoc发现2个新路径（随机探索）。确定性变异阶段（bitflip + arith + interest）贡献了70%的新路径发现，体现了AFL确定性变异策略的高效性。
 
 # 4 优缺点与技术落地反思
 
